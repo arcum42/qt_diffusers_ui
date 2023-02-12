@@ -12,18 +12,9 @@ from PySide6.QtGui import QImage, QPixmap
 from pathlib import Path
 
 from diffusers import StableDiffusionPipeline
-from diffusers import LMSDiscreteScheduler
-from diffusers import EulerAncestralDiscreteScheduler
-from diffusers import EulerDiscreteScheduler
-from diffusers import DDPMScheduler
-from diffusers import HeunDiscreteScheduler
-from diffusers import DDIMScheduler
-from diffusers import PNDMScheduler
-from diffusers import DPMSolverSinglestepScheduler
-from diffusers import DPMSolverMultistepScheduler
+from diffusers import LMSDiscreteScheduler, EulerAncestralDiscreteScheduler, EulerDiscreteScheduler, DDPMScheduler, HeunDiscreteScheduler, DDIMScheduler, PNDMScheduler, DPMSolverSinglestepScheduler, DPMSolverMultistepScheduler
 
-global config
-global pipe
+global config, pipe
 
 scheduler_list = {
     "euler a", "euler", "LMS", "DDPM", "heun", "DDIM", "PNDM", "DPM Solver single", "DPM Solver multi", "DPM Solver++ single", "DPM Solver++ multi"
@@ -46,7 +37,7 @@ def setJSONToDefaults():
         'modelPath': 'model',
         'imagePath': 'images',
         'modelName': '',
-        'imageName': 'img.png',
+        'imageName': 'img-cfg-{cfg}steps-{steps}seed-{seed}.png',
         'width':  512,
         'height': 512,
         'steps': 20,
@@ -183,16 +174,26 @@ def pipeCallback(step: int, timestep: int, latents: torch.FloatTensor):
 def generateArt(self):
     global pipe
 
+    prompt = window.promptText.toPlainText()
+    negPrompt = window.negPromptText.toPlainText()
+
+    current_seed = config['seed']
+    if current_seed == -1:
+        current_seed = random.randrange(2147483647)
+
+    mapping = {'seed': current_seed, 'width': config['width'], 'height': config['height'], 'steps': config['steps'], 'cfg': config['cfg'], 'scheduler':config['scheduler']}
+    imageFilename = config['imageName'].format_map(mapping)
+
     if config['modelName'] == "":
         modelFilename = ""
     else:
         modelFilename = Path(
             Path(config['modelPath'])/config['modelName']).absolute()
     imageFilename = Path(
-        Path(config['imagePath'])/config['imageName']).absolute()
+        Path(config['imagePath'])/imageFilename).absolute()
 
     if imageFilename.is_file():
-        if warning_dialog(f"Overwrite existing file: {config['imageName']}?") == False:
+        if warning_dialog(f"Overwrite existing file: {imageFilename}?") == False:
             return
 
     if config['local'] == True:
@@ -203,13 +204,6 @@ def generateArt(self):
     if ourModel == "":
         print("No model selected!")
         return
-
-    prompt = window.promptText.toPlainText()
-    negPrompt = window.negPromptText.toPlainText()
-
-    current_seed = config['seed']
-    if current_seed == -1:
-        current_seed = random.randrange(2147483647)
 
     generator = torch.Generator(device="cuda").manual_seed(current_seed)
     # generator = [torch.Generator(device="cuda").manual_seed(i) for i in range(4)]
@@ -246,7 +240,7 @@ def generateArt(self):
     window.aiArt.setPixmap(localPixmap)
 
 
-@Slot()
+@ Slot()
 def refreshModelList(self):
     global config
 
@@ -262,83 +256,83 @@ def refreshModelList(self):
     config["modelName"] = window.modelsComboBox.currentText()
 
 
-@Slot()
+@ Slot()
 def modelChanged(self):
     config["modelName"] = window.modelsComboBox.currentText()
     initModel()
     print("Model set to {}.".format(config["modelName"]))
 
 
-@Slot()
+@ Slot()
 def schedulerChanged(self):
     config["scheduler"] = window.schedulerBox.currentText()
     setScheduler()
     print("Scheduler set to {}.".format(config["scheduler"]))
 
 
-@Slot()
+@ Slot()
 def changeImageName():
     config["imageName"] = window.imageFilenameText.text()
     print("Image filename will be {}.".format(config["imageName"]))
 
 
-@Slot()
+@ Slot()
 def changeModelPath():
     config["modelPath"] = Path(window.modelPathText.text()).absolute()
     print("Model path is now {}.".format(config["modelPath"]))
     refreshModelList(0)
 
 
-@Slot()
+@ Slot()
 def changeImagePath():
     config["imagePath"] = Path(window.imagePathText.text()).absolute()
     print("Image path is now {}.".format(config["imagePath"]))
 
 
-@Slot()
+@ Slot()
 def updateCFG():
     config['cfg'] = window.cfgSpin.value()
 
 
-@Slot()
+@ Slot()
 def updateSteps():
     config['steps'] = window.stepsSpin.value()
 
 
-@Slot()
+@ Slot()
 def updateWidth():
     config['width'] = window.widthSpin.value()
 
 
-@Slot()
+@ Slot()
 def updateHeight():
     config['height'] = window.heightSpin.value()
 
 
-@Slot()
+@ Slot()
 def updateSeed():
     config['seed'] = window.seedSpin.value()
 
 
-@Slot()
+@ Slot()
 def safety_dance():
     config['safety'] = window.safetyCheck.isChecked()
     print("Reloading model...")
     initModel()
 
 
-@Slot()
+@ Slot()
 def close_down():
     saveJSON()
 
 
-@Slot()
+@ Slot()
 def checkLocal():
     config['local'] = window.localRadio.isChecked()
     initModel()
 
 
-@Slot()
+@ Slot()
 def changeRemoteModel():
     config['remote-model'] = window.remoteUrlText.text()
 

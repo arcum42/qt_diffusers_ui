@@ -40,7 +40,7 @@
            <rect>
             <x>0</x>
             <y>-6</y>
-            <width>931</width>
+            <width>932</width>
             <height>981</height>
            </rect>
           </property>
@@ -352,6 +352,13 @@
               </widget>
              </item>
              <item>
+              <widget class="QLabel" name="label_3">
+               <property name="text">
+                <string>Use {} for substitutions. Allowed values are: seed, width, height, steps, cfg, scheduler.</string>
+               </property>
+              </widget>
+             </item>
+             <item>
               <widget class="QProgressBar" name="generationProgress">
                <property name="enabled">
                 <bool>false</bool>
@@ -371,8 +378,8 @@
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>516</width>
-                  <height>436</height>
+                  <width>517</width>
+                  <height>424</height>
                  </rect>
                 </property>
                 <widget class="QLabel" name="aiArt">
