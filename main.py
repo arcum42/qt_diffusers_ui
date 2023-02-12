@@ -21,14 +21,12 @@ scheduler_list = {
 }
 
 
-def warning_dialog(desc):
+def info_dialog(desc):
     aDialog = QMessageBox()
-    aDialog.setIcon(QMessageBox.Warning)
-    aDialog.setWindowTitle("Warning")
-    aDialog.setStandardButtons(QMessageBox.Cancel | QMessageBox.Ok)
+    aDialog.setIcon(QMessageBox.information)
+    aDialog.setStandardButtons(QMessageBox.Ok)
     aDialog.setText(desc)
     button = aDialog.exec()
-    return button == QMessageBox.Ok
 
 
 def setJSONToDefaults():
@@ -46,7 +44,7 @@ def setJSONToDefaults():
         'seed': -1,
         'safety': True,
         'remote-model': '',
-        'scheduler': 'euler a'
+        'scheduler': 'DPM Solver++ multi'
     }
 
 
@@ -157,12 +155,13 @@ def initModel():
 
     if config['local'] == False:
         print("Saving remote model locally.")
-        saveLocalModel()
+
+        if warning_dialog("Save remote model in the model folder?") == True:
+            saveLocalModel()
 
     setScheduler()
     pipe.to("cuda")
     pipe.enable_attention_slicing()
-
 
 def pipeCallback(step: int, timestep: int, latents: torch.FloatTensor):
     window.generationProgress.setMinimum(1)
