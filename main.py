@@ -34,7 +34,7 @@ def setJSONToDefaults():
     config = {
     'modelPath' : 'model',
     'imagePath' : 'images',
-    'modelName' : 'waifu-diffusion',
+    'modelName' : '',
     'imageName' : 'img.png',
     'width' :  512,
     'height' : 512,
@@ -43,7 +43,7 @@ def setJSONToDefaults():
     'local' : True,
     'seed' : -1,
     'safety' : True,
-    'remote-model' : 'hakurei/waifu-diffusion',
+    'remote-model' : '',
     'scheduler' : 'euler a'
     }
 
@@ -115,11 +115,20 @@ def setScheduler():
 def initModel():
     global pipe
 
-    modelFilename = Path(Path(config['modelPath'])/config['modelName']).absolute()
+    if config['modelName'] == "":
+        modelFilename = ""
+    else:
+        modelFilename = Path(Path(config['modelPath'])/config['modelName']).absolute()
+    
     if config['local'] == True:
         ourModel = modelFilename
     else:
         ourModel = config['remote-model']
+    
+    if ourModel == "":
+        print("No model selected!")
+        return
+
     safety = config['safety']
     print(f"Loading model {ourModel}. Safety is {safety}.")
     if safety == True:
@@ -144,14 +153,23 @@ def pipeCallback(step: int, timestep: int, latents: torch.FloatTensor):
 def generateArt(self):
     global pipe
 
-    prompt = window.promptText.toPlainText()
-    negPrompt = window.negPromptText.toPlainText()
-    modelFilename = Path(Path(config['modelPath'])/config['modelName']).absolute()
+    if config['modelName'] == "":
+        modelFilename = ""
+    else:
+        modelFilename = Path(Path(config['modelPath'])/config['modelName']).absolute()
     imageFilename = Path(Path(config['imagePath'])/config['imageName']).absolute()
+
     if config['local'] == True:
         ourModel = modelFilename
     else:
         ourModel = config['remote-model']
+
+    if ourModel == "":
+        print ("No model selected!")
+        return
+
+    prompt = window.promptText.toPlainText()
+    negPrompt = window.negPromptText.toPlainText()
 
     current_seed = config['seed']
     if current_seed == -1:
@@ -197,6 +215,8 @@ def refreshModelList(self):
     window.modelsComboBox.clear()
     modelDirs = next(os.walk(Path(config['modelPath'])))[1]
     print(modelDirs)
+
+    window.modelsComboBox.addItem("")
     for x in modelDirs:
         print("Found {}.".format(x))
         window.modelsComboBox.addItem(x)

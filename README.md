@@ -23,13 +23,14 @@ pip install pyside6
 pip install --upgrade diffusers[torch] transformers accelerate scipy safetensors
 ```
 
-In fact, right now, you'd also need to create a model folder, go into it, and do:
+If you want to download a model, go to the model folder you want to use and run. for example:
+
 ```
 git lfs install
 git clone https://huggingface.co/hakurei/waifu-diffusion
 ```
 
-just because that's the default, and it tries to load a model immediately. I'll be fixing that, but I'll keep this in the readme until I get to it. (The reason the default isn't 1.5 or 2.1 is because both include multiple copies of the model in ckpt and safetensor format in the git repository as well, so you could be downloading up to 5 copies of the same model...)
+You could also choose huggingface, and type (for example) "hakurei/waifu-diffusion". Also note that when you git clone a repository, it will pull any extraneous files in it as well. For example, if you git cloned "https://huggingface.co/runwayml/stable-diffusion-v1-5", you'll wind up with the folder, and **4 extra copies** of the model as well, downloading almost 24 extra GB of files. (waifu diffusion doesn't have any extra models in its folder, hence using that as an example.)
 
 To actually launch the gui afterwards, type "sh launch.sh", or just activate the venv and run main.py.
 
