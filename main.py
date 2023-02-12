@@ -270,20 +270,7 @@ def checkLocal():
 def changeRemoteModel():
     config['remote-model'] = window.remoteUrlText.text()
 
-# Start of main function
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-
-    # Load our config file.
-    random.seed()
-    loadJSON()
-
-    # Load the ui file.
-    loader = QUiLoader()
-    ui_file = QFile("mainwindow.ui")
-    ui_file.open(QFile.ReadOnly)
-    window = loader.load(ui_file)
-
+def set_ui_from_config():
     # Load configs into the ui.
     window.imageFilenameText.setText(config['imageName'])
     window.modelPathText.setText(config['modelPath'])
@@ -300,15 +287,12 @@ if __name__ == "__main__":
     else:
         window.remoteRadio.setChecked(True)
 
-    window.setWindowTitle("QT Diffusers UI")
-    window.theTabs.setTabEnabled(1, False)
-    window.theTabs.setTabEnabled(2, False)
-
     # Iterate through and list all the models in the model directory.
     refreshModelList(0)
     addSchedulers()
     window.schedulerBox.setCurrentText(config["scheduler"])
 
+def connect_ui():
     # Connect all the widgets
     window.generateButton.clicked.connect(generateArt)
     window.modelsRefreshButton.clicked.connect(refreshModelList)
@@ -328,7 +312,27 @@ if __name__ == "__main__":
     window.schedulerBox.currentTextChanged.connect(schedulerChanged)
     app.aboutToQuit.connect(close_down)
 
+# Start of main function
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+
+    # Load our config file.
+    random.seed()
+    loadJSON()
+
+    # Load the ui file.
+    loader = QUiLoader()
+    ui_file = QFile("mainwindow.ui")
+    ui_file.open(QFile.ReadOnly)
+    window = loader.load(ui_file)
     ui_file.close()
+
+    window.setWindowTitle("QT Diffusers UI")
+    window.theTabs.setTabEnabled(1, False)
+    window.theTabs.setTabEnabled(2, False)
+
+    set_ui_from_config()
+    connect_ui()
 
     initModel()
     window.show()
