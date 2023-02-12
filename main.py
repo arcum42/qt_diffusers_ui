@@ -25,6 +25,10 @@ from diffusers import DPMSolverMultistepScheduler
 global config
 global pipe
 
+scheduler_list = {
+    "euler a", "euler", "LMS", "DDPM", "heun", "DDIM", "PNDM", "DPM Solver single", "DPM Solver multi", "DPM Solver++ single", "DPM Solver++ multi"
+}
+
 def setJSONToDefaults():
     global config
     config = {
@@ -68,17 +72,8 @@ def saveLocalModel():
         pipe.save_pretrained(save_directory=newModelPath, safe_serialization=True)
 
 def addSchedulers():
-    window.schedulerBox.addItem("euler a")
-    window.schedulerBox.addItem("euler")
-    window.schedulerBox.addItem("LMS")
-    window.schedulerBox.addItem("DDPM")
-    window.schedulerBox.addItem("heun")
-    window.schedulerBox.addItem("DDIM")
-    window.schedulerBox.addItem("PNDM")
-    window.schedulerBox.addItem("DPM Solver single")
-    window.schedulerBox.addItem("DPM Solver multi")
-    window.schedulerBox.addItem("DPM Solver++ single")
-    window.schedulerBox.addItem("DPM Solver++ multi")
+    for x in scheduler_list:
+        window.schedulerBox.addItem(x)
 
 def setScheduler():
     global pipe

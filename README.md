@@ -40,7 +40,7 @@ I'll probably be changing a fair amount of how the models work. I'm thinking abo
 Other things I'd like to add are Img2Img and Inpainting, and upscaling, for a start. All depends on how interested I get in it.
 
 Suggestions for other guis to use for stable diffusion:
-* I'm sure everyone knows Automatic1111 - https://github.com/AUTOMATIC1111/stable-diffusion-webui . It's the most advanced gui, with lots of extensions and so on, and tends to be the default people assume you are using.
-* cmdr2/ **Easy Diffusion** - https://github.com/cmdr2/stable-diffusion-ui . This is coming along, and is honestly pretty good. If it wasn't for all the useful extensions in Automatic1111, I'd probably be using this a lot.
+* Automatic1111 - https://github.com/AUTOMATIC1111/stable-diffusion-webui . It's the best known and most advanced gui, with lots of extensions and so on, and tends to be the default people assume you are using.
+* cmdr2/Easy Diffusion - https://github.com/cmdr2/stable-diffusion-ui . This is coming along, and is honestly pretty good. If it wasn't for all the useful extensions in Automatic1111, I'd probably be using this a lot.
 * InvokeAI - https://github.com/invoke-ai/InvokeAI - These guys are doing pretty interesting things too. The unified Canvas is a great idea.
 * ComfyUI - https://github.com/comfyanonymous/ComfyUI - Using nodes for Stable Diffusion is an idea I like...
