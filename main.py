@@ -5,7 +5,7 @@ import torch
 import json
 import random
 
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QMessageBox
 from PySide6.QtCore import QFile, Slot
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtGui import QImage, QPixmap
@@ -28,6 +28,15 @@ global pipe
 scheduler_list = {
     "euler a", "euler", "LMS", "DDPM", "heun", "DDIM", "PNDM", "DPM Solver single", "DPM Solver multi", "DPM Solver++ single", "DPM Solver++ multi"
 }
+
+def warning_dialog(desc):
+    aDialog = QMessageBox()
+    aDialog.setIcon(QMessageBox.Warning)
+    aDialog.setWindowTitle("Warning")
+    aDialog.setStandardButtons(QMessageBox.Cancel | QMessageBox.Ok)
+    aDialog.setText(desc)
+    button = aDialog.exec()
+    return button == QMessageBox.Ok
 
 def setJSONToDefaults():
     global config
@@ -158,6 +167,10 @@ def generateArt(self):
     else:
         modelFilename = Path(Path(config['modelPath'])/config['modelName']).absolute()
     imageFilename = Path(Path(config['imagePath'])/config['imageName']).absolute()
+
+    if imageFilename.is_file():
+        if warning_dialog(f"Overwrite existing file: {config['imageName']}?") == False:
+            return
 
     if config['local'] == True:
         ourModel = modelFilename
