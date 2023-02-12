@@ -34,6 +34,8 @@ You could also choose huggingface, and type (for example) "hakurei/waifu-diffusi
 
 To actually launch the gui afterwards, type "sh launch.sh", or just activate the venv and run main.py.
 
+![A screenshot of the gui](screenshot.png)
+
 You choose Local or Huggingface, and choose a model/type in a model, and can turn on and off the NSFW filter. There's a refresh button to rescan the model directory. If you go to settings, paths for models and images are there, defaulting to "model" and "images". the Txt2Img tab should be pretty straightforward. Put in a prompt, set your settings, put a filename in, hit generate, it generates an image, saves it, and displays it.
 
 I'll probably be changing a fair amount of how the models work. I'm thinking about having both remote and local in the pulldown, and letting you add remote ones in a tab. I'd **like** to add a way to actually just use a ckpt or safetensors file, or at least a way to convert one into this format in the gui, but that's for later.
