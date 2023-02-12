@@ -1,0 +1,1 @@
+Images are output to this folder by default.
