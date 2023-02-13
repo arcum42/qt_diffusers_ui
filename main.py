@@ -4,6 +4,9 @@ import os
 import torch
 import json
 import random
+import diff_output
+
+from PySide6 import QtCore
 
 from PySide6.QtWidgets import QApplication, QMessageBox
 from PySide6.QtCore import QFile, Slot
@@ -13,6 +16,9 @@ from pathlib import Path
 
 from diffusers import StableDiffusionPipeline
 from diffusers import LMSDiscreteScheduler, EulerAncestralDiscreteScheduler, EulerDiscreteScheduler, DDPMScheduler, HeunDiscreteScheduler, DDIMScheduler, PNDMScheduler, DPMSolverSinglestepScheduler, DPMSolverMultistepScheduler
+
+from PIL import Image
+from PIL.ImageQt import ImageQt
 
 global config, pipe
 
@@ -233,11 +239,7 @@ def generateArt(self):
         ).images[0]
     window.generationProgress.setValue(config["steps"])
     image.save(imageFilename)
-
-    localImage = QImage(imageFilename)
-    localPixmap = QPixmap(localImage)
-    window.aiArt.setPixmap(localPixmap)
-
+    output_window.add_image(image)
 
 @ Slot()
 def refreshModelList(self):
@@ -323,7 +325,7 @@ def safety_dance():
 @ Slot()
 def close_down():
     saveJSON()
-
+    output_window.close()
 
 @ Slot()
 def checkLocal():
@@ -335,6 +337,13 @@ def checkLocal():
 def changeRemoteModel():
     config['remote-model'] = window.remoteUrlText.text()
 
+@Slot()
+def shut_down():
+    QApplication.quit()
+
+@Slot()
+def toggleOutput(self):
+    output_window.setVisible(not output_window.isVisible())
 
 def set_ui_from_config():
     # Load configs into the ui.
@@ -348,6 +357,7 @@ def set_ui_from_config():
     window.seedSpin.setValue(config['seed'])
     window.safetyCheck.setChecked(config['safety'])
     window.remoteUrlText.setText(config['remote-model'])
+    window.actionOutput.setChecked(True)
     if config['local'] == True:
         window.localRadio.setChecked(True)
     else:
@@ -378,6 +388,9 @@ def connect_ui():
     window.remoteUrlText.editingFinished.connect(changeRemoteModel)
     window.schedulerBox.currentTextChanged.connect(schedulerChanged)
     app.aboutToQuit.connect(close_down)
+    window.actionExit.triggered.connect(shut_down)
+    window.destroyed.connect(shut_down)
+    window.actionOutput.toggled.connect(toggleOutput)
 
 
 # Start of main function
@@ -394,8 +407,10 @@ if __name__ == "__main__":
     ui_file.open(QFile.ReadOnly)
     window = loader.load(ui_file)
     ui_file.close()
+    output_window = diff_output.output_ui()
 
     window.setWindowTitle("QT Diffusers UI")
+    window.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.WindowTitleHint | QtCore.Qt.CustomizeWindowHint)
     window.theTabs.setTabEnabled(1, False)
     window.theTabs.setTabEnabled(2, False)
 
@@ -404,8 +419,7 @@ if __name__ == "__main__":
 
     initModel()
     window.show()
-
-    # Save configuration.
-    saveJSON()
+    output_window.show()
+    output_window.open()
 
     sys.exit(app.exec())
