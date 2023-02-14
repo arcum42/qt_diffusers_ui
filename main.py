@@ -439,7 +439,7 @@ if __name__ == "__main__":
     window.setWindowTitle("QT Diffusers UI")
     window.setWindowFlags(
         QtCore.Qt.Window | QtCore.Qt.WindowTitleHint | QtCore.Qt.CustomizeWindowHint)
-    window.theTabs.setTabEnabled(1, False)
+    #window.theTabs.setTabEnabled(1, False)
     window.theTabs.setTabEnabled(2, False)
 
     set_ui_from_config()
