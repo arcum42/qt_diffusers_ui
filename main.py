@@ -11,20 +11,26 @@ from PySide6 import QtCore
 from PySide6.QtWidgets import QApplication, QMessageBox
 from PySide6.QtCore import QFile, Slot
 from PySide6.QtUiTools import QUiLoader
-from PySide6.QtGui import QImage, QPixmap
 from pathlib import Path
 
 from diffusers import StableDiffusionPipeline
 from diffusers import LMSDiscreteScheduler, EulerAncestralDiscreteScheduler, EulerDiscreteScheduler, DDPMScheduler, HeunDiscreteScheduler, DDIMScheduler, PNDMScheduler, DPMSolverSinglestepScheduler, DPMSolverMultistepScheduler
-
-from PIL import Image
-from PIL.ImageQt import ImageQt
 
 global config, pipe
 
 scheduler_list = {
     "euler a", "euler", "LMS", "DDPM", "heun", "DDIM", "PNDM", "DPM Solver single", "DPM Solver multi", "DPM Solver++ single", "DPM Solver++ multi"
 }
+
+
+def warning_dialog(desc):
+    aDialog = QMessageBox()
+    aDialog.setIcon(QMessageBox.Warning)
+    aDialog.setWindowTitle("Warning")
+    aDialog.setStandardButtons(QMessageBox.Cancel | QMessageBox.Ok)
+    aDialog.setText(desc)
+    button = aDialog.exec()
+    return button == QMessageBox.Ok
 
 
 def info_dialog(desc):
@@ -41,11 +47,12 @@ def setJSONToDefaults():
         'modelPath': 'model',
         'imagePath': 'images',
         'modelName': '',
-        'imageName': 'img-cfg-{cfg}steps-{steps}seed-{seed}.png',
+        'imageName': 'img-cfg-{cfg}-steps-{steps}-seed-{seed}-{batch}-{batch_size}.png',
         'width':  512,
         'height': 512,
         'steps': 20,
         'cfg': 7,
+        'batch_size': 1,
         'local': True,
         'seed': -1,
         'safety': True,
@@ -169,6 +176,7 @@ def initModel():
     pipe.to("cuda")
     pipe.enable_attention_slicing()
 
+
 def pipeCallback(step: int, timestep: int, latents: torch.FloatTensor):
     window.generationProgress.setMinimum(1)
     window.generationProgress.setMaximum(config["steps"])
@@ -186,20 +194,11 @@ def generateArt(self):
     if current_seed == -1:
         current_seed = random.randrange(2147483647)
 
-    mapping = {'seed': current_seed, 'width': config['width'], 'height': config['height'], 'steps': config['steps'], 'cfg': config['cfg'], 'scheduler':config['scheduler']}
-    imageFilename = config['imageName'].format_map(mapping)
-
     if config['modelName'] == "":
         modelFilename = ""
     else:
         modelFilename = Path(
             Path(config['modelPath'])/config['modelName']).absolute()
-    imageFilename = Path(
-        Path(config['imagePath'])/imageFilename).absolute()
-
-    if imageFilename.is_file():
-        if warning_dialog(f"Overwrite existing file: {imageFilename}?") == False:
-            return
 
     if config['local'] == True:
         ourModel = modelFilename
@@ -213,33 +212,51 @@ def generateArt(self):
     generator = torch.Generator(device="cuda").manual_seed(current_seed)
     # generator = [torch.Generator(device="cuda").manual_seed(i) for i in range(4)]
     print(
-        f"Prompt: '{prompt}', Negative prompt: '{negPrompt}', Steps: {config['steps']}, CFG: {config['cfg']}, width: {config['width']}, height: {config['height']}, seed: {current_seed}. Model is '{ourModel}'. Saving to '{imageFilename}'.")
+        f"Prompt: '{prompt}', Negative prompt: '{negPrompt}', Steps: {config['steps']}, CFG: {config['cfg']}, width: {config['width']}, height: {config['height']}, seed: {current_seed}. Model is '{ourModel}''.")
 
     if not negPrompt:
-        image = pipe(
+        images = pipe(
             prompt=prompt,
             generator=generator,
             guidance_scale=config['cfg'],
             num_inference_steps=config['steps'],
             height=config['height'],
             width=config['width'],
+            num_images_per_prompt=config['batch_size'],
             callback=pipeCallback
-        ).images[0]
+        ).images
     else:
         # seed, batch_size
-        image = pipe(
+        images = pipe(
             prompt=prompt,
             generator=generator,
             negative_prompt=negPrompt,
             guidance_scale=config['cfg'],
-            num_inference_steps=config['steps'],
+            num_inference_steps=config['batch_size'],
             height=config['height'],
             width=config['width'],
+            num_images_per_prompt=2,
             callback=pipeCallback
-        ).images[0]
+        ).images
     window.generationProgress.setValue(config["steps"])
-    image.save(imageFilename)
-    output_window.add_image(image)
+
+    batch = 0
+    for x in images:
+        mapping = {'seed': current_seed, 'width': config['width'], 'height': config['height'], 'steps': config['steps'],
+                   'cfg': config['cfg'], 'scheduler': config['scheduler'], 'batch_size': config['batch_size'], 'batch': batch}
+        imageFilename = config['imageName'].format_map(mapping)
+
+        imageFilename = Path(
+            Path(config['imagePath'])/imageFilename).absolute()
+
+        if imageFilename.is_file():
+            if warning_dialog(f"Overwrite existing file: {imageFilename}?") == False:
+                return
+
+        x.save(imageFilename)
+        output_window.set_image(x, batch)
+        batch = batch + 1
+
 
 @ Slot()
 def refreshModelList(self):
@@ -316,16 +333,16 @@ def updateSeed():
 
 
 @ Slot()
+def updateBatchSize():
+    config['batch_size'] = window.batchCountSpin.value()
+
+
+@ Slot()
 def safety_dance():
     config['safety'] = window.safetyCheck.isChecked()
     print("Reloading model...")
     initModel()
 
-
-@ Slot()
-def close_down():
-    saveJSON()
-    output_window.close()
 
 @ Slot()
 def checkLocal():
@@ -337,13 +354,21 @@ def checkLocal():
 def changeRemoteModel():
     config['remote-model'] = window.remoteUrlText.text()
 
+
+@ Slot()
+def close_down():
+    saveJSON()
+
+
 @Slot()
 def shut_down():
     QApplication.quit()
 
+
 @Slot()
 def toggleOutput(self):
     output_window.setVisible(not output_window.isVisible())
+
 
 def set_ui_from_config():
     # Load configs into the ui.
@@ -355,6 +380,7 @@ def set_ui_from_config():
     window.stepsSpin.setValue(config['steps'])
     window.cfgSpin.setValue(config['cfg'])
     window.seedSpin.setValue(config['seed'])
+    window.batchCountSpin.setValue(config['batch_size'])
     window.safetyCheck.setChecked(config['safety'])
     window.remoteUrlText.setText(config['remote-model'])
     window.actionOutput.setChecked(True)
@@ -383,6 +409,7 @@ def connect_ui():
     window.stepsSpin.valueChanged.connect(updateSteps)
     window.cfgSpin.valueChanged.connect(updateCFG)
     window.seedSpin.valueChanged.connect(updateSeed)
+    window.batchCountSpin.valueChanged.connect(updateBatchSize)
     window.safetyCheck.stateChanged.connect(safety_dance)
     window.localRadio.toggled.connect(checkLocal)
     window.remoteUrlText.editingFinished.connect(changeRemoteModel)
@@ -410,16 +437,16 @@ if __name__ == "__main__":
     output_window = diff_output.output_ui()
 
     window.setWindowTitle("QT Diffusers UI")
-    window.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.WindowTitleHint | QtCore.Qt.CustomizeWindowHint)
+    window.setWindowFlags(
+        QtCore.Qt.Window | QtCore.Qt.WindowTitleHint | QtCore.Qt.CustomizeWindowHint)
     window.theTabs.setTabEnabled(1, False)
     window.theTabs.setTabEnabled(2, False)
 
     set_ui_from_config()
     connect_ui()
 
-    initModel()
     window.show()
+    initModel()
     output_window.show()
-    output_window.open()
 
     sys.exit(app.exec())
