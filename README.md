@@ -34,7 +34,7 @@ You could also choose huggingface, and type (for example) "hakurei/waifu-diffusi
 
 To actually launch the gui afterwards, type "sh launch.sh", or just activate the venv and run main.py.
 
-![A screenshot of the gui](screenshot.png)
+![A screenshot of the gui](screenshot.png?)
 
 You choose Local or Huggingface, and choose a model/type in a model, and can turn on and off the NSFW filter. There's a refresh button to rescan the model directory. If you go to settings, paths for models and images are there, defaulting to "model" and "images". the Txt2Img tab should be pretty straightforward. Put in a prompt, set your settings, put a filename in, hit generate, it generates an image, saves it, and displays it.
 
